@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TripMate | AI Travel Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --grad: linear-gradient(135deg, #e8631a 0%, #c040b0 100%);
+      --a1: #e8631a; --a2: #c040b0;
+      --dark: #1a0e2a; --mid: #7a607a; --soft: #b090c0;
+    }
+    html, body {
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: linear-gradient(160deg, #ffecd5 0%, #ffd6c0 18%, #f9c8e8 50%, #e8c8f8 75%, #d8c8f8 100%);
+    }
+    body::before {
+      content: '';
+      position: fixed; top: 5%; left: 15%;
+      width: 70%; height: 55%;
+      background: radial-gradient(ellipse at center, rgba(255,240,190,0.60) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: relative; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 52px;
+      background: rgba(255,255,255,0.28);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; font-weight: 700;
+      background: var(--grad);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { font-size: 13px; color: var(--mid); text-decoration: none; transition: color .2s; }
+    .nav-links a:hover { color: var(--a2); }
+    .nav-pill {
+      background: var(--grad); color: #fff;
+      font-size: 13px; font-weight: 500;
+      padding: 10px 22px; border-radius: 99px; border: none; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(180,60,140,.38);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .nav-pill:hover { transform: translateY(-2px); }
+
+    /* HERO */
+    .hero {
+      position: relative; z-index: 2;
+      display: grid; grid-template-columns: 1fr 1fr;
+      padding: 52px 52px 60px;
+      min-height: 620px;
+      align-items: center;
+    }
+    .hero-left { padding-right: 28px; }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(44px, 4.8vw, 64px);
+      font-weight: 700; line-height: 1.08; color: var(--dark);
+      animation: fadeUp .7s .1s both;
+    }
+    h1 em { font-style: italic; font-weight: 400; color: #e0608a; -webkit-text-fill-color: #e0608a; }
+
+    /* ERROR ALERT */
+    .error-alert {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #d00;
+      padding: 15px;
+      border-radius: 18px;
+      margin-top: 20px;
+      font-size: 13px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(200,0,0,0.05);
+      animation: fadeUp 0.5s ease;
+    }
+
+    .form-card {
+      margin-top: 28px;
+      background: rgba(255,255,255,0.58);
+      backdrop-filter: blur(28px);
+      border: 1px solid rgba(255,255,255,0.88);
+      border-radius: 28px; padding: 26px 26px 22px;
+      box-shadow: 0 2px 0 rgba(255,255,255,.9) inset, 0 24px 56px rgba(100,50,130,.14);
+      animation: fadeUp .8s .3s both;
+    }
+    .fl { font-size: 9.5px; color: var(--soft); letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; font-weight:500; }
+    .route-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(248,242,255,.70);
+      border: 1px solid rgba(200,155,240,.30);
+      border-radius: 16px; padding: 14px 18px; margin-bottom: 12px;
+    }
+    .rf { flex: 1; }
+    .fv { font-size: 15px; font-weight: 500; color: var(--dark); }
+    .swap-btn {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      background: var(--grad); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(180,50,160,.42); transition: transform .35s;
+    }
+    .swap-btn:hover { transform: rotate(180deg); }
+    .inp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .inp-box {
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(220,195,245,.45);
+      border-radius: 14px; padding: 13px 15px;
+      transition: border-color .2s, background .2s;
+    }
+    .inp-box:focus-within { border-color: rgba(180,60,180,.45); background: rgba(255,255,255,.95); }
+    .inp-box input {
+      width: 100%; border: none; background: transparent; outline: none;
+      font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; color: var(--dark);
+    }
+    .inp-box input::placeholder { color: #c0a8d0; font-weight: 300; }
+    
+    .cta-btn {
+      width: 100%; background: var(--grad); border: none; border-radius: 16px;
+      padding: 17px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; color: #fff; cursor: pointer;
+      box-shadow: 0 10px 30px rgba(180,60,140,.42);
+      position: relative; overflow: hidden; transition: transform .2s, box-shadow .2s;
+    }
+    .cta-btn::before {
+      content: ''; position: absolute; top: -50%; left: -65%;
+      width: 55%; height: 200%;
+      background: rgba(255,255,255,.18); transform: skewX(-22deg);
+      animation: shimmer 3.2s infinite;
+    }
+    @keyframes shimmer { 0%{left:-65%} 100%{left:130%} }
+    .cta-btn:hover { transform: translateY(-2px); }
+
+    /* GLOBE & ANIMATIONS */
+    .hero-right {
+      position: relative; height: 560px;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeUp .9s .2s both;
+    }
+    .globe-scene {
+      position: relative;
+      width: 320px; height: 320px;
+      animation: globeFloat 5s ease-in-out infinite alternate;
+      flex-shrink: 0;
+    }
+    .globe-sphere {
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 65%, #1a5a8a 0%, #1068a0 40%, #0d4e7a 70%, #093858 100%);
+      box-shadow: 0 28px 80px rgba(30,20,80,0.45), inset 0 -30px 60px rgba(0,20,70,0.5);
+    }
+    .globe-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .globe-grid {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(255,255,255,0.07) 31px, rgba(255,255,255,0.07) 32px);
+    }
+    .globe-shadow {
+      position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%);
+      width: 210px; height: 24px; background: rgba(40,15,90,0.22); border-radius: 50%; filter: blur(14px);
+    }
+    @keyframes globeFloat { from { transform: translateY(0px); } to { transform: translateY(-18px); } }
+
+    /* FLOATING CARDS */
+    .float-card {
+      position: absolute;
+      background: rgba(255,255,255,0.74);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 14px 20px;
+      box-shadow: 0 12px 40px rgba(100,50,140,.16);
+    }
+    .fc-hotel    { top: 30px;   right: 0;    animation: fcf2 5s ease-in-out infinite alternate; }
+    .fc-budget   { bottom: 140px; left: 0;   animation: fcf1 4.5s ease-in-out infinite alternate; }
+    .fc-duration { bottom: 30px;  right: 20px; animation: fcf3 4s ease-in-out infinite alternate; }
+
+    @keyframes fcf1 { from{transform:translateY(0) rotate(-1deg)} to{transform:translateY(-12px) rotate(1deg)} }
+    @keyframes fcf2 { from{transform:translateY(0) rotate(1deg)}  to{transform:translateY(-14px) rotate(-1deg)} }
+    @keyframes fcf3 { from{transform:translateY(0) rotate(-.5deg)} to{transform:translateY(-10px) rotate(1.5deg)} }
+
+    /* CHIPS */
+    .chips-sec { position:relative; z-index:3; padding: 0 52px 48px; }
+    .chip {
+      background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,.80);
+      backdrop-filter: blur(12px); border-radius:99px;
+      padding:9px 20px; font-size:13px; color:var(--mid); cursor:pointer;
+      box-shadow: 0 3px 12px rgba(150,70,180,.10); transition:all .25s;
+    }
+    .chip:hover { background:rgba(255,255,255,.88); transform:translateY(-2px); color:var(--dark); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @media(max-width:768px){ .hero-right{display:none} .hero{grid-template-columns:1fr; padding:20px} .nav-links{display:none} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">TripMate</div>
+  <div class="nav-links"><a href="#">Explore</a><a href="#">My trips</a><a href="#">Hotels</a></div>
+  <button class="nav-pill">Plan a trip</button>
+</nav>
+
+<section class="hero">
+  <div class="hero-left">
+    <h1>Plan your<br><em>perfect</em><br>getaway.</h1>
+
+    {% if error_msg %}
+    <div class="error-alert">
+      <strong>Budget Alert!</strong> ₹{{ user_budget }} is not enough for {{ days }} days in {{ city }}. <br>
+      Minimum recommended: <strong>₹{{ min_val }}</strong> (Land cost only).
+    </div>
+    {% endif %}
+
+    <div class="form-card">
+      <form action="/generate" method="POST">
+        <div class="route-row">
+          <div class="rf">
+            <div class="fl">From</div>
+            <div class="fv"><input type="text" name="from_city" placeholder="Mumbai" value="Mumbai" required style="border:none;background:transparent;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#1a0e2a;width:100%"></div>
+          </div>
+          <button type="button" class="swap-btn" id="swapBtn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 5.5L8 2.5L13 5.5M13 10.5L8 13.5L3 10.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="rf" style="text-align:right">
+            <div class="fl">To</div>
+            <div class="fv"><input type="text" name="to_city" placeholder="Tokyo" required style="border:none;background:transparent;outline:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#1a0e2a;width:100%;text-align:right"></div>
+          </div>
+        </div>
+        <div class="inp-grid">
+          <div class="inp-box"><div class="fl">Land Budget ₹</div><input type="number" name="budget" placeholder="25000" required></div>
+          <div class="inp-box"><div class="fl">Days</div><input type="number" name="days" placeholder="4" required></div>
+          <div class="inp-box"><div class="fl">Arrival</div><input type="time" name="arrival" value="10:00"></div>
+          <div class="inp-box"><div class="fl">Departure</div><input type="time" name="departure" value="18:00"></div>
+        </div>
+        <button type="submit" class="cta-btn"><span class="cta-inner">Generate my itinerary →</span></button>
+      </form>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="globe-scene">
+      <div class="globe-sphere">
+        <svg class="globe-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="sphereClip"><circle cx="160" cy="160" r="160"/></clipPath>
+            <linearGradient id="landGrad"><stop offset="0%" stop-color="#7cbd5a"/><stop offset="100%" stop-color="#4a8432"/></linearGradient>
+            <linearGradient id="aridGrad"><stop offset="0%" stop-color="#e3c382"/><stop offset="100%" stop-color="#c8a864"/></linearGradient>
+            <linearGradient id="iceGrad"><stop offset="0%" stop-color="#e8f4fc"/><stop offset="100%" stop-color="#cce4f4"/></linearGradient>
+          </defs>
+          <g clip-path="url(#sphereClip)">
+            <ellipse cx="174" cy="98" rx="22" ry="18" fill="url(#landGrad)" />
+            <ellipse cx="178" cy="165" rx="32" ry="52" fill="url(#landGrad)" />
+            <ellipse cx="175" cy="145" rx="28" ry="22" fill="url(#aridGrad)" opacity="0.4" />
+            <ellipse cx="238" cy="100" rx="62" ry="48" fill="url(#landGrad)" />
+            <ellipse cx="228" cy="148" rx="18" ry="28" fill="url(#landGrad)" />
+            <ellipse cx="64"  cy="112" rx="44" ry="52" fill="url(#landGrad)" />
+            <ellipse cx="90"  cy="228" rx="28" ry="52" fill="url(#landGrad)" />
+            <ellipse cx="278" cy="226" rx="36" ry="28" fill="url(#aridGrad)" />
+            <rect x="0" y="292" width="320" height="40" fill="url(#iceGrad)" />
+            <rect x="0" y="0" width="320" height="28" fill="url(#iceGrad)" />
+          </g>
+        </svg>
+        <div class="globe-grid"></div>
+      </div>
+      <div class="globe-shadow"></div>
+    </div>
+
+    <div class="float-card fc-hotel">
+      <div class="fclbl">Top Pick Hotel</div>
+      <div class="fcval" style="font-size:16px;">Lemon Tree</div>
+      <div class="fcsub">Goa · ₹2,400/night</div>
+    </div>
+    <div class="float-card fc-budget"><div class="fclbl">Budget Used</div><div class="fcval">70%</div></div>
+    <div class="float-card fc-duration"><div class="fclbl">Duration</div><div class="fcval">4 nights</div></div>
+  </div>
+</section>
+
+<div class="chips-sec">
+  <div class="sec-lbl">Popular destinations</div>
+  <div class="chips-row">
+    <div class="chip">🏖 Goa</div><div class="chip">🏔 Manali</div><div class="chip">🏯 Jaipur</div>
+    <div class="chip">🧘 Rishikesh</div><div class="chip">🌿 Coorg</div><div class="chip">🏝 Andaman</div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('swapBtn').addEventListener('click', function() {
+    let f = document.querySelector('[name="from_city"]'), t = document.querySelector('[name="to_city"]'), tmp = f.value;
+    f.value = t.value; t.value = tmp;
+  });
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => { document.querySelector('[name="to_city"]').value = c.textContent.split(' ')[1]; });
+  });
+
+  // INFINITE ROTATION
+  (function() {
+    var svg = document.querySelector('.globe-svg');
+    if (!svg) return;
+    var x = 0;
+    setInterval(function() {
+      x -= 0.18;
+      svg.style.transform = 'translateX(' + x + 'px)';
+      if (x < -80) x = 0;
+    }, 50);
+  })();
+</script>
+</body>
+</html>

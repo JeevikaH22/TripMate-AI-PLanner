@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Plan | TripMate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --grad: linear-gradient(135deg, #e8631a 0%, #c040b0 100%);
+      --bg: #fdf6ec;
+      --a1: #e8631a; --a2: #c040b0;
+      --dark: #1a0e2a; --mid: #6a507a;
+      --glass: rgba(255,255,255,0.8);
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--dark); line-height: 1.6; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    /* Header Styles */
+    .header { text-align: center; margin-bottom: 40px; }
+    .header h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 10px; }
+
+    /* Flight Checker Card */
+    .flight-checker {
+      background: var(--glass);
+      padding: 25px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255,255,255,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .flight-checker h4 { margin-bottom: 15px; color: var(--dark); font-size: 1.2rem; }
+    .flight-controls { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    
+    select, button {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    button {
+      background: var(--grad);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: translateY(-2px); }
+
+    #flight-result {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Itinerary Content */
+    .section-title { font-family: 'Playfair Display', serif; margin: 30px 0 15px; font-size: 1.8rem; border-left: 5px solid var(--a1); padding-left: 15px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    .hotel-price { color: var(--a1); font-weight: bold; display: block; margin-bottom: 10px; }
+    .day-card { background: white; margin-bottom: 20px; border-radius: 15px; overflow: hidden; border: 1px solid #eee; }
+    .day-header { background: var(--grad); color: white; padding: 15px 20px; font-weight: bold; font-size: 1.1rem; }
+    .slot { padding: 15px 20px; border-bottom: 1px solid #f9f9f9; display: flex; gap: 15px; }
+    .slot:last-child { border-bottom: none; }
+    .slot-time { font-weight: bold; color: var(--mid); min-width: 80px; font-size: 0.9rem; text-transform: uppercase; }
+    
+    .breakdown-box { background: var(--dark); color: white; padding: 25px; border-radius: 15px; display: flex; justify-content: space-around; text-align: center; }
+    .b-item span { display: block; font-size: 0.8rem; opacity: 0.7; margin-bottom: 5px; }
+    .b-item strong { font-size: 1.2rem; color: #ff9d6c; }
+
+    @media (max-width: 600px) {
+      .breakdown-box { flex-direction: column; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Your {{ city }} Escape</h1>
+    <p>A personalized {{ days }}-day journey for ₹{{ budget }}</p>
+  </div>
+
+  <div class="flight-checker">
+    <h4>✈️ Estimated Flight Prices</h4>
+    <p style="font-size: 0.9rem; color: var(--mid); margin-bottom: 15px;">Want to see approx flight costs? Select your travel month:</p>
+    
+    <div class="flight-controls">
+      <select id="flight-month">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+      </select>
+      <button onclick="fetchFlightPrices()" id="check-btn">Check Prices</button>
+    </div>
+
+    <div id="flight-result" style="display: none;">
+      <span style="font-size: 0.8rem; color: var(--mid); text-transform: uppercase;">Estimated Round-trip:</span>
+      <h2 id="price-range" style="color: var(--a2); margin: 5px 0;"></h2>
+      <p id="flight-tip" style="font-size: 0.9rem; color: var(--mid); max-width: 500px; margin: 0 auto;"></p>
+    </div>
+  </div>
+
+  <h2 class="section-title">Land Budget Breakdown</h2>
+  <div class="breakdown-box">
+    {% for key, val in result.breakdown.items() %}
+    <div class="b-item">
+      <span>{{ key }}</span>
+      <strong>{{ val }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="section-title">Recommended Stays</h2>
+  <div class="grid">
+    {% for hotel in result.hotels %}
+    <div class="card">
+      <span class="hotel-price">{{ hotel.price }}</span>
+      <h3 style="margin-bottom: 8px;">{{ hotel.name }}</h3>
+      <p style="font-size: 0.9rem; color: var(--mid);">{{ hotel.desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <h2 class="section-title">Daily Schedule</h2>
+  {% for day in result.itinerary %}
+  <div class="day-card">
+    <div class="day-header">Day {{ day.day }}</div>
+    <div class="slot">
+      <div class="slot-time">Morning</div>
+      <div class="slot-desc">{{ day.morning }}</div>
+    </div>
+    <div class="slot">
+      <div class="slot-time">Afternoon</div>
+      <div class="slot-desc">{{ day.afternoon }}</div>
+    </div>
+    <div class="slot">
+      <div class="slot-time">Night</div>
+      <div class="slot-desc">{{ day.night }}</div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div style="text-align: center; margin-top: 50px;">
+    <a href="/" style="text-decoration: none; color: var(--mid); font-weight: bold;">← Plan another trip</a>
+  </div>
+</div>
+
+<script>
+function fetchFlightPrices() {
+  const month = document.getElementById('flight-month').value;
+  const btn = document.getElementById('check-btn');
+  const resultArea = document.getElementById('flight-result');
+  
+  btn.innerText = "Searching...";
+  btn.disabled = true;
+
+  fetch('/get_flights', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from_city: "{{ from_city }}", 
+      to_city: "{{ city }}",
+      month: month
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    resultArea.style.display = "block";
+    document.getElementById('price-range').innerText = data.range;
+    document.getElementById('flight-tip').innerText = data.tip;
+    btn.innerText = "Update Estimate";
+    btn.disabled = false;
+  })
+  .catch(err => {
+    console.error(err);
+    btn.innerText = "Error - Try again";
+    btn.disabled = false;
+  });
+}
+</script>
+
+</body>
+</html>
