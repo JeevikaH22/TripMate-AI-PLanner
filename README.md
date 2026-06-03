@@ -37,7 +37,7 @@ To run this project locally, you need the following:
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/TripMate-AI-Planner.git
+git clone https://github.com/JeevikaH22/TripMate-AI-Planner.git
 cd TripMate-AI-Planner
 ```
 
